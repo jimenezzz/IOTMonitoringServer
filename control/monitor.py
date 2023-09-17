@@ -58,6 +58,60 @@ def analyze_data():
     print(len(aggregation), "dispositivos revisados")
     print(alerts, "alertas enviadas")
 
+def control_leds():
+    # Consulta los datos más recientes para la variable que controla los LEDs
+    # Determina si los LEDs deben encenderse o apagarse según una condición específica
+    # Envía un mensaje para controlar los LEDs según la decisión
+
+    print("Calculando alertas...")
+
+    data = Data.objects.filter(
+        base_time__gte=datetime.now() - timedelta(minutes=10))
+    aggregation = data.annotate(check_value=Avg('avg_value')) \
+        .select_related('station', 'measurement') \
+        .select_related('station__user', 'station__location') \
+        .select_related('station__location__city', 'station__location__state',
+                        'station__location__country') \
+        .values('check_value', 'station__user__username',
+                'measurement__name',
+                'measurement__max_value',
+                'measurement__min_value',
+                'station__location__city__name',
+                'station__location__state__name',
+                'station__location__country__name')
+    alerts = 0
+    for item in aggregation:
+        alert = False
+        color = ""
+
+        variable = item["measurement__name"]
+        max_value = item["measurement__max_value"] or 0
+        min_value = item["measurement__min_value"] or 0
+
+        country = item['station__location__country__name']
+        state = item['station__location__state__name']
+        city = item['station__location__city__name']
+        user = item['station__user__username']
+
+        if item["check_value"] > max_value:
+            alert = True
+            color = "red"
+        elif item["check_value"] < min_value:
+            alert = True
+            color = "blue"
+
+        if alert:
+            if color == "red":
+                message = "Turning LED {}, {} is high".format(color, variable)
+            elif color == "blue":
+                message = "Turning LED {}, {} is low".format(color, variable)
+            topic = '{}/{}/{}/{}/in'.format(country, state, city, user)
+            print(datetime.now(), "Sending led alert to {} {}".format(topic, variable))
+            client.publish(topic, message)
+            alerts += 1
+
+    print(len(aggregation), "dispositivos revisados para control de LEDs")
+    print(alerts, "alertas enviadas para control de LEDs")
 
 def on_connect(client, userdata, flags, rc):
     '''
@@ -106,6 +160,7 @@ def start_cron():
     '''
     print("Iniciando cron...")
     schedule.every(5).minutes.do(analyze_data)
+    schedule.every(2).minutes.do(control_leds)
     print("Servicio de control iniciado")
     while 1:
         schedule.run_pending()
