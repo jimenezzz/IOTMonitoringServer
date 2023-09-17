@@ -101,9 +101,9 @@ def control_leds():
 
         if alert:
             if color == "red":
-                message = "ALERT Turning LED {}, {} is high".format(color, variable)
+                message = "CHANGE Turning LED {}, {} is high".format(color, variable)
             elif color == "blue":
-                message = "ALERT Turning LED {}, {} is low".format(color, variable)
+                message = "CHANGE Turning LED {}, {} is low".format(color, variable)
             topic = '{}/{}/{}/{}/in'.format(country, state, city, user)
             print(datetime.now(), "Sending led alert to {} {}".format(topic, variable))
             client.publish(topic, message)
