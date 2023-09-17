@@ -96,15 +96,15 @@ def control_leds():
         if item["check_value"] > max_value:
             alert = True
             color = "red"
-        elif item["check_value"] < min_value:
+        elif item["check_value"] <= min_value:
             alert = True
             color = "blue"
 
         if alert:
             if color == "red":
-                message = "Turning LED {}, {} is high".format(color, variable)
+                message = "ALERT Turning LED {}, {} is high".format(color, variable)
             elif color == "blue":
-                message = "Turning LED {}, {} is low".format(color, variable)
+                message = "ALERT Turning LED {}, {} is low".format(color, variable)
             topic = '{}/{}/{}/{}/in'.format(country, state, city, user)
             print(datetime.now(), "Sending led alert to {} {}".format(topic, variable))
             client.publish(topic, message)
@@ -160,8 +160,8 @@ def start_cron():
     '''
     print("Iniciando cron...")
     #schedule.every(5).minutes.do(analyze_data)
-    #schedule.every(30).seconds.do(control_leds)
-    schedule.every(30).seconds.do(analyze_data)
+    schedule.every(30).seconds.do(control_leds)
+    #schedule.every(30).seconds.do(analyze_data)
     print("Servicio de control iniciado")
     while 1:
         schedule.run_pending()
