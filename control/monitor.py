@@ -63,7 +63,7 @@ def control_leds():
     # Determina si los LEDs deben encenderse o apagarse según una condición específica
     # Envía un mensaje para controlar los LEDs según la decisión
 
-    print("Calculando alertas...")
+    print("Calculando warnings de leds...")
 
     data = Data.objects.filter(
         base_time__gte=datetime.now() - timedelta(minutes=10))
